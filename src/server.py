@@ -1,6 +1,8 @@
+import logging
 from flask import Flask, jsonify, Response, request
 
-import logging
+from core.productionplan import ProductionPlan
+
 
 # TODO(kba): move logger to config file
 logger = logging.getLogger()
@@ -23,7 +25,15 @@ def create_server(test_config=None) -> Flask:
 
     @app.post("/productionplan")
     def productionplan() -> tuple[Response, int]:
-        return jsonify({"key": "value"}), 200
+        # 1. Parse input
+        parsed_body = request.json
+        # print("inp", parsed_body)
+
+        # 2. Run production plan
+        output = ProductionPlan.proccess(parsed_body)
+
+        # 3. Format output
+        return jsonify(output), 200
 
     # TODO(kba): catch errors
     # Logs
