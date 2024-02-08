@@ -5,6 +5,10 @@
 
 ### Create the environment
 
+You need to have Python3 installed.
+
+> Note: Use VSCode to better experience
+
 ```shell
 python3 -m venv .venv
 source .venv/bin/activate
