@@ -55,17 +55,33 @@ class ProductionPlan:
         remaining_load = wanted_load
         reached_load = 0.0
 
+        # WARNING. List of constraints:
+        # - Wind tubine can be used at 0% or 100% capacity
+        # - Others powerplants can have a mininum load to be working (variable pmin)
+
         # 2. Loop on all power plants to distribute the load
         for pp in power_sources:
-            # Find the adequate load
-            max_load = pp.max_load()
-            choosen_load = min(max_load, remaining_load)
+            # Find the adequate load for this powerplant
+            choosen_load = min(pp.max_load(), remaining_load)
+
+            # If the wind turbine is not used at 100% capacity, we decide to not using it
+            if pp.type == "windturbine" and choosen_load != pp.max_load():
+                # raise Exception(
+                #     f"Wind max power not reached: {pp.name} {choosen_load}, {pp.max_load()}"
+                # )
+                s.put(pp, 0.0)
+                continue
 
             if choosen_load < pp.min_load():
                 # If the defined load for this powerplant is lower than the min power (pmin)
-                # We need to find a compromise
+                # We need to find a compromise with the minimal cost. There is 2 solutions:
+                # - 1. Reduce the load of previous powerplants
+                # - 2. Power on a next powerplant
+
                 print("error", choosen_load, pp.min_load())
-                # raise x
+                raise Exception(
+                    f"Minimal power not reached: {pp.name} {choosen_load} < {pp.min_load()}"
+                )
 
             # Affect load
             reached_load += choosen_load
@@ -73,8 +89,10 @@ class ProductionPlan:
 
             s.put(pp, round(choosen_load, 1))
 
+            # TODO(kba): do not test equality between 2 floats
             if remaining_load == 0.0:
                 break
+
         s.reached_load = reached_load
 
         return s
