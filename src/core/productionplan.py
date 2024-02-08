@@ -38,13 +38,27 @@ class PowerSource:
         return float(self.pmin)
 
     def max_load(self) -> float:
-        return float(self.pmin) * self.wind_capacity
+        return float(self.pmax) * self.wind_capacity
+
+
+class Solution:
+    charges: list[dict[str, Any]]
+    reached_load: float
+
+    def __init__(self) -> None:
+        self.charges = []
+        self.reached_load = 0.0
+
+    def put(self, power_source: PowerSource, power: float) -> None:
+        self.charges.append({"name": power_source.name, "p": power})
 
 
 class ProductionPlan:
     @staticmethod
     def proccess(data: dict[str, Any]) -> list[dict[str, Any]]:
         # 1. For all sources, create data objects
+        wanted_load = data["load"]
+
         price_gas = data["fuels"]["gas(euro/MWh)"]
         price_ker = data["fuels"]["kerosine(euro/MWh)"]
         wind_capacity = data["fuels"]["wind(%)"]
@@ -73,11 +87,41 @@ class ProductionPlan:
             power_sources.append(power_source)
 
         # 2. Sort by price
-        power_sources = sorted(power_sources, key=lambda o: o.price)
+        solution = ProductionPlan.find_best_solution(power_sources, wanted_load)
 
         # 3. Create output by powerplant name and load
-        output = [
-            {"name": o.name, "price": o.price, "p": o.found_load} for o in power_sources
-        ]
-        # output = [{"name": o.name, "p": o.found_load} for o in power_sources]
+        output = solution.charges
         return output
+
+    @staticmethod
+    def find_best_solution(
+        power_sources: list[PowerSource], wanted_load: float
+    ) -> Solution:
+        power_sources = sorted(power_sources, key=lambda o: o.price)
+
+        s = Solution()
+        remaining_load = wanted_load
+        reached_load = 0.0
+
+        for pp in power_sources:
+            # Find the adequate load
+            max_load = pp.max_load()
+            choosen_load = min(max_load, remaining_load)
+
+            if choosen_load < pp.min_load():
+                # If the defined load for this powerplant is lower than the min power (pmin)
+                # We need to find a compromise
+                print("error", choosen_load, pp.min_load())
+                # raise x
+
+            # Affect load
+            reached_load += choosen_load
+            remaining_load -= choosen_load
+
+            s.put(pp, round(choosen_load, 1))
+
+            if remaining_load == 0.0:
+                break
+        s.reached_load = reached_load
+
+        return s

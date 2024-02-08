@@ -8,7 +8,7 @@ from core.productionplan import ProductionPlan
 logger = logging.getLogger()
 logger.setLevel("INFO")
 handler = logging.StreamHandler()
-formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
+formatter = logging.Formatter("%(asctime)s -- %(levelname)s -- %(message)s")
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
@@ -27,7 +27,6 @@ def create_server(test_config=None) -> Flask:
     def productionplan() -> tuple[Response, int]:
         # 1. Parse input
         parsed_body = request.json
-        # print("inp", parsed_body)
 
         # 2. Run production plan
         output = ProductionPlan.proccess(parsed_body)
