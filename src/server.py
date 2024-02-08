@@ -11,26 +11,24 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 
-
 def create_server(test_config=None) -> Flask:
     # Create Flask app
     app = Flask(__name__)
 
     ##################
     # Define endponits
-    @app.get('/ready')
+    @app.get("/ready")
     def ready() -> str:
-        return 'ready'
+        return "ready"
 
-    @app.post('/productionplan')
+    @app.post("/productionplan")
     def productionplan() -> tuple[Response, int]:
         return jsonify({"key": "value"}), 200
-
 
     # TODO(kba): catch errors
     # Logs
     @app.after_request
-    def after_request(response:Response) -> Response:
+    def after_request(response: Response) -> Response:
         logger.info("%s %s %s", request.method, request.path, response.status)
         return response
 
