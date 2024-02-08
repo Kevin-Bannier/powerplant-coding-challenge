@@ -1,6 +1,29 @@
 # powerplant-coding-challenge
 
 
+## Test the app
+
+### Create the environment
+
+```shell
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+### Start the HTTP server
+
+```shell
+python3 src/main.py
+```
+
+### Send a request with a payload to process production plan
+
+```shell
+python3 send_payload.py <filename>
+```
+
+
 ## Welcome !
 
 Below you can find the description of a coding challenge that we ask people to perform when applying for a job in our team.

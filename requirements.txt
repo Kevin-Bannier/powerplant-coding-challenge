@@ -1,7 +1,7 @@
 # Deps
-flask==3.0.2
-requests
-waitress
+flask~=3.0.2
+requests~=2.25.1
+waitress~=3.0.0
 
 # Dev deps
-black
+black~=24.1.1
