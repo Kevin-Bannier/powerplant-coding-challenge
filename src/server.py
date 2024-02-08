@@ -1,4 +1,5 @@
 import logging
+import traceback
 from flask import Flask, jsonify, Response, request
 
 from core.productionplan import ProductionPlan
@@ -34,11 +35,22 @@ def create_server(test_config=None) -> Flask:
         # 3. Format output
         return jsonify(output), 200
 
-    # TODO(kba): catch errors
+    # Catch errors
+    @app.errorhandler(Exception)
+    def catch_exceptions(e: Exception) -> tuple[str, int]:
+        tb = traceback.format_exc()
+        logger.error(tb)
+
+        message = "INTERNAL SERVER ERROR"
+        return {"error": message}, 500
+
     # Logs
     @app.after_request
     def after_request(response: Response) -> Response:
-        logger.info("%s %s %s", request.method, request.path, response.status)
+        if response.status_code >= 200 and response.status_code < 300:
+            logger.info("%s %s %s", request.method, request.path, response.status)
+        else:
+            logger.error("%s %s %s", request.method, request.path, response.status)
         return response
 
     return app

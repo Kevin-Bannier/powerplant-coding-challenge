@@ -36,7 +36,7 @@ class ProductionPlan:
             )
             power_sources.append(power_source)
 
-        # 2. Sort by price
+        # 2. Find the best solution
         solution = ProductionPlan.find_best_solution(power_sources, wanted_load)
 
         # 3. Create output by powerplant name and load
@@ -47,12 +47,15 @@ class ProductionPlan:
     def find_best_solution(
         power_sources: list[PowerSource], wanted_load: float
     ) -> Solution:
+        # Define the first criteria: price
+        # 1. Sort power plants by cost price
         power_sources = sorted(power_sources, key=lambda o: o.price)
 
         s = Solution()
         remaining_load = wanted_load
         reached_load = 0.0
 
+        # 2. Loop on all power plants to distribute the load
         for pp in power_sources:
             # Find the adequate load
             max_load = pp.max_load()
