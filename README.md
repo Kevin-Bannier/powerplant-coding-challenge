@@ -21,6 +21,8 @@ python3 src/main.py
 
 ```shell
 python3 send_payload.py <filename>
+# By example:
+python3 send_payload.py example_payloads/payload2.json
 ```
 
 
