@@ -48,8 +48,8 @@ class ProductionPlan:
         power_sources: list[PowerSource], wanted_load: float
     ) -> Solution:
         # Define the first criteria: price
-        # 1. Sort power plants by cost price
-        power_sources = sorted(power_sources, key=lambda o: o.price)
+        # 1. Sort power plants by cost price (cost price = fuel_price / efficiency)
+        power_sources = sorted(power_sources, key=lambda o: o.cost_price())
 
         s = Solution()
         remaining_load = wanted_load

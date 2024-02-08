@@ -35,8 +35,12 @@ def main() -> None:
 
     if resp.status_code == 200:
         print("Found solution for powerplants loads:")
+        total_production = 0.0
         for item in resp.json():
             print("  - ", item["name"], item["p"])
+            total_production += item["p"]
+        print("\nTotal Production :", total_production)
+
     else:
         print("Response status", resp.status_code)
         print("Response content", resp.text)

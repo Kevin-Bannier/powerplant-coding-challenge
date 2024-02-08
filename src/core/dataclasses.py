@@ -40,6 +40,10 @@ class PowerSource:
     def max_load(self) -> float:
         return float(self.pmax) * self.wind_capacity
 
+    def cost_price(self) -> float:
+        """cost price = fuel_price / efficiency"""
+        return self.price / self.efficiency
+
 
 class Solution:
     charges: list[dict[str, Any]]
