@@ -51,48 +51,93 @@ class ProductionPlan:
         # 1. Sort power plants by cost price (cost price = fuel_price / efficiency)
         power_sources = sorted(power_sources, key=lambda o: o.cost_price())
 
+        # 2. Group powerplants by cost price
+        # power_sources_grouped = []
+        pp_by_cost_prices = {}
+        for pp in power_sources:
+            if pp.cost_price() not in pp_by_cost_prices:
+                pp_by_cost_prices[pp.cost_price()] = []
+            pp_by_cost_prices[pp.cost_price()].append(pp)
+
+        pp_by_cost_prices = dict(sorted(pp_by_cost_prices.items()))
+        # print("Powerplants sorted by cost prices")
+        # for price, pps in pp_by_cost_prices.items():
+        #     print("- ", price, [pp.name for pp in pps])
+        # print()
+
         s = Solution()
         remaining_load = wanted_load
-        reached_load = 0.0
 
         # WARNING. List of constraints:
         # - Wind tubine can be used at 0% or 100% capacity
         # - Others powerplants can have a mininum load to be working (variable pmin)
 
-        # 2. Loop on all power plants to distribute the load
-        for pp in power_sources:
-            # Find the adequate load for this powerplant
-            choosen_load = min(pp.max_load(), remaining_load)
-
-            # If the wind turbine is not used at 100% capacity, we decide to not using it
-            if pp.type == "windturbine" and choosen_load != pp.max_load():
-                # raise Exception(
-                #     f"Wind max power not reached: {pp.name} {choosen_load}, {pp.max_load()}"
-                # )
-                s.put(pp, 0.0)
-                continue
-
-            if choosen_load < pp.min_load():
-                # If the defined load for this powerplant is lower than the min power (pmin)
-                # We need to find a compromise with the minimal cost. There is 2 solutions:
-                # - 1. Reduce the load of previous powerplants
-                # - 2. Power on a next powerplant
-
-                print("error", choosen_load, pp.min_load())
-                raise Exception(
-                    f"Minimal power not reached: {pp.name} {choosen_load} < {pp.min_load()}"
+        # 3. Loop on all power plants to distribute the load
+        for powerplants in pp_by_cost_prices.values():
+            list_of_pps_output, remaining_load = (
+                ProductionPlan.find_compromise_pp_at_same_cost_price(
+                    powerplants, remaining_load
                 )
+            )
+            for pp in list_of_pps_output:
+                s.put(pp[0], pp[1])
+                print("- ", pp[0].name, pp[1])
 
-            # Affect load
-            reached_load += choosen_load
-            remaining_load -= choosen_load
-
-            s.put(pp, round(choosen_load, 1))
-
-            # TODO(kba): do not test equality between 2 floats
-            if remaining_load == 0.0:
-                break
-
-        s.reached_load = reached_load
+        s.reached_load = wanted_load - remaining_load
 
         return s
+
+    @staticmethod
+    def find_compromise_pp_at_same_cost_price(
+        powerplants: list[PowerSource],
+        remaining_load: float,
+    ) -> list[tuple[PowerSource, float]]:
+        list_of_pps_output = []
+
+        for pp in powerplants:
+            # Find the adequate load for this powerplant
+            if remaining_load != 0.0:
+
+                choosen_load = min(pp.max_load(), remaining_load)
+                # If the wind turbine is not used at 100% capacity, we decide to not using it
+                if pp.type == "windturbine" and choosen_load != pp.max_load():
+                    list_of_pps_output.append((pp, 0.0))
+                    continue
+
+                if choosen_load < pp.min_load():
+                    # If the defined load for this powerplant is lower than the min power (pmin)
+                    # We need to find a compromise with the minimal cost.
+                    # We choose to reduce power of previous powerpants
+
+                    delta_too_much_load = pp.min_load() - choosen_load
+                    choosen_load = pp.min_load()
+                    ProductionPlan.reduce_loads_of_previous_powerplants(
+                        list_of_pps_output, delta_too_much_load
+                    )
+                    remaining_load += delta_too_much_load
+
+                # Affect load
+                remaining_load -= choosen_load
+            else:
+                choosen_load = 0.0
+
+            list_of_pps_output.append((pp, round(choosen_load, 1)))
+
+        return list_of_pps_output, remaining_load
+
+    @staticmethod
+    def reduce_loads_of_previous_powerplants(
+        powerplants: list[tuple[PowerSource, float]],
+        delta_too_much_load: float,
+    ) -> None:
+        for i, (powerplant, power) in enumerate(powerplants):
+            power_reduced = max(power - delta_too_much_load, powerplant.min_load())
+
+            delta_too_much_load -= power - power_reduced
+            powerplants[i] = (powerplant, power_reduced)
+
+        if delta_too_much_load != 0:
+            pp_str = ",".join(pp[0].name for pp in powerplants)
+            raise Exception(
+                f"Cannot find a compromise of power loads of power plants:{pp_str}"
+            )
