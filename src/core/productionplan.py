@@ -52,7 +52,6 @@ class ProductionPlan:
         power_sources = sorted(power_sources, key=lambda o: o.cost_price())
 
         # 2. Group powerplants by cost price
-        # power_sources_grouped = []
         pp_by_cost_prices = {}
         for pp in power_sources:
             if pp.cost_price() not in pp_by_cost_prices:
@@ -60,10 +59,6 @@ class ProductionPlan:
             pp_by_cost_prices[pp.cost_price()].append(pp)
 
         pp_by_cost_prices = dict(sorted(pp_by_cost_prices.items()))
-        # print("Powerplants sorted by cost prices")
-        # for price, pps in pp_by_cost_prices.items():
-        #     print("- ", price, [pp.name for pp in pps])
-        # print()
 
         s = Solution()
         remaining_load = wanted_load
